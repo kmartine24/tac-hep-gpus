@@ -102,6 +102,11 @@ void Particle::p4(double pT, double Eta, double Phi, double energy){
 	eta = Eta;
 	phi = Phi;
 	E = energy;
+
+	p[0] = energy;
+	p[1] = pT*std::cos(Phi);
+	p[2] = pT*std::sin(Phi);
+	p[3] = pT*std::sinh(Eta);
 }
 
 void Particle::setMass(double mass)
@@ -170,7 +175,7 @@ int main() {
 	// Total number of events in ROOT tree
 	Long64_t nentries = t1->GetEntries();
 
-	for (Long64_t jentry=0; jentry<100;jentry++)
+	for (Long64_t jentry=0; jentry<1;jentry++)
  	{
 		t1->GetEntry(jentry);
 		std::cout<<"******** Event "<< jentry << " ********" << std::endl;	
