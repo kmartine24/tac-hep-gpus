@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <time.h>
-
+#include <iostream>
 
 #define BLOCK_SIZE 32
 
@@ -24,46 +24,98 @@ const int b = 1;
 // CUDA kernel that runs on the GPU
 __global__ void dot_product(const int *A, const int *B, int *C, int N) {
 
-	// FIXME
-	// Use atomicAdd	
+    // FIXME
+    // Use atomicAdd	
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (idx < N) {
+        float product = A[idx]*B[idx];
+	atomicAdd(C, product);
+    }
 }
 
 
 int main() {
 	
-	// Create the device and host pointers
-	int *h_A, *h_B, *h_C, *d_A, *d_B, *d_C;
+    // Create the device and host pointers
+    int *h_A, *h_B, *h_C, *d_A, *d_B, *d_C;
 
-	// Fill in the host pointers 
-	h_A = new int[DSIZE];
-	h_B = new int[DSIZE];
-	h_C = new int;
-	for (int i = 0; i < DSIZE; i++){
-		h_A[i] = a;
-		h_B[i] = b;
-	}
+    // Fill in the host pointers 
+    h_A = new int[DSIZE];
+    h_B = new int[DSIZE];
+    h_C = new int;
+    for (int i = 0; i < DSIZE; i++){
+        h_A[i] = a;
+        h_B[i] = b;
+    }
 
-	*h_C = 0;
+    *h_C = 0;
 
+    std::cout << "******** Initial Matrix Values ********" << std::endl;
+    std::cout << "h_A = ";
+    for (int i = 0; i < 5; ++i) {
+        std::cout << h_A[i] << " ";
+    }
+    std::cout << ", ... " << std::endl;
+    std::cout << "h_B = ";
+    for (int i = 0; i < 5; ++i) {
+        std::cout << h_B[i] << " ";
+    }
+    std::cout << ", ... " << std::endl;
+    std::cout << "h_C = " << *h_C << std::endl;
 
-	// Allocate device memory 
+    // Allocate device memoryy
+    cudaMalloc(&d_A, DSIZE*sizeof(float));
+    cudaMalloc(&d_B, DSIZE*sizeof(float));
+    cudaMalloc(&d_C, DSIZE*sizeof(float));
+
+    // Check memory allocation for errors
+    // std::cout << "Checking Memory Allocation" << std::endl;
+    cudaCheckErrors();
+
+    // Copy the matrices on GPU
+    cudaMemcpy(d_A, h_A, DSIZE*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_B, h_B, DSIZE*sizeof(float), cudaMemcpyHostToDevice);
 	
-	// Check memory allocation for errors
+    // Check memory copy for errors
+    // std::cout << "Checking Memory Copy from Host to Device" << std::endl;
+    cudaCheckErrors();
 
-	// Copy the matrices on GPU
+    // Define block/grid dimentions and launch kernel
+    dim3 block(32,32); 
+    dim3 grid(1,1); 
+    dot_product<<<grid, block>>>(d_A, d_B, d_C, DSIZE);
 	
-	// Check memory copy for errors
-
-	// Define block/grid dimentions and launch kernel
-	
-	// Copy results back to host
+    // Copy results back to host
+    cudaMemcpy(h_C, d_C, DSIZE*sizeof(float), cudaMemcpyDeviceToHost);
 	
     // Check copy for errors
+    // std::cout << "Checking Memory Copy from Device to Host" << std::endl;
+    cudaCheckErrors();
 
-	// Verify result
+    // Verify result
+    std::cout << "******** Verifying Results ********" << std::endl;
+    std::cout << "h_A = ";
+    for (int i = 0; i < 5; ++i) {
+        std::cout << h_A[i] << " ";
+    }   
+    std::cout << ", ... " << std::endl;
+    std::cout << "h_B = ";
+    for (int i = 0; i < 5; ++i) {
+        std::cout << h_B[i] << " ";
+    }   
+    std::cout << ", ... " << std::endl;
+    std::cout << "h_C = " << *h_C << std::endl;
+  
+    // Free allocated memory
+    free(h_A);
+    free(h_B);
+    free(h_C);
 
-	// Free allocated memory
-	
-	return 0;
+    cudaFree(d_A);
+    cudaFree(d_B);
+    cudaFree(d_C);
+
+    return 0;
 
 }
