@@ -19,24 +19,29 @@ __global__ void stencil_2d(int *in, int *out) {
 
     // Read input elements into shared memory
     int size = N + 2 * RADIUS;
-    temp[lindex_x][lindex_y] = in[gindex_x * size + gindex_y]
+    temp[lindex_x][lindex_y] = in[gindex_x * size + gindex_y];
 
     if (threadIdx.x < RADIUS) {
         temp[lindex_x-RADIUS][lindex_y] = in[size*(gindex_x - RADIUS) + gindex_y];
-        temp[lindex_x-BLOCK_SIZE][lindex_y] = FIXME;
+        temp[lindex_x+BLOCK_SIZE][lindex_y] = in[size*(gindex_x + BLOCK_SIZE) + gindex_y];
     }
 
     if (threadIdx.y < RADIUS ) {
-        FIXME
+        temp[lindex_x][lindex_y-RADIUS] = in[size*gindex_x + gindex_y-RADIUS];
+        temp[lindex_x][lindex_y+BLOCK_SIZE] = in[size* + gindex_y+BLOCK_SIZE];
     }
+    __syncthreads();
 
     // Apply the stencil
     int result = 0;
     for (int offset = -RADIUS; offset <= RADIUS; offset++){
-        result += temp[lindex+offset];
+        result += temp[lindex_x+offset][lindex_y];
+	result += temp[lindex_x][lindex_y+offset];
     }
 
-    FIXME
+    result -= temp[lindex_x][lindex_y]; // Shout out to Taylor for helping with this part
+    __syncthreads();
+
     // Store the result
     out[gindex_y+size*gindex_x] = result;
 }
