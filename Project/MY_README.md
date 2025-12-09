@@ -53,6 +53,10 @@ nsys stats report1.nsys-rep > base_cuda.txt --force-export=true
     - 74.3% of the GPU time was spent on the stencil function compared to 25.7% of the time spent on the matrix multiplication function
 
 ## CUDA using Shared Memory
-
-
+- This is the last step I was able to complete for the final project
+- This is very similar to the Managed Memory version of the CUDA code, with some slight modifications to the matrix multiplication function 
+- The most interesting part of this portion of the final project is noticing the results from nsys
+  - The `cudaStreamCreate` took up 98.5% of computation time which was previously primarily taken up by `cudaMallocManaged`. Now, `cudaMallocManaged` takes up just 0.1% of computation time. 
+  - Now, 97.6% of the GPU time have spent on the matrix multiplication function compared to the stencil function at 2.4%. 
+  - It is also interesting to note that this method takes longer to complete as a whole in comparison to Managed Memory (~6.4 ms vs ~5.6 ms respectively)
 
