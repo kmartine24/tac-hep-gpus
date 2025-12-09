@@ -31,7 +31,7 @@ export PATH=$PATH:/usr/local/cuda/bin
 **To compile:**
 
 ```
-nvcc my_script.cu -o my_script
+nvcc stencil_matmul.cu -o stencil_matmul
 ```
 - We want to use `nsys` to compare the different CUDA methods
   - We had to use the following commands to export the necessary information:
@@ -47,10 +47,11 @@ nsys stats report1.nsys-rep > base_cuda.txt --force-export=true
 - This is very similar to the previous CUDA code written
   - The only differences occur in `main` where the type of memory usage is determined 
 - We want to use `nsys` to compare the different CUDA methods 
-  - We follow the commands listed under the Explicit Memory method
+  - We follow the commands listed under the Explicit Memory method except changing the exported text file name to a more appropriate name
   - For the managed memory method: 
-    - For 98.3% of the time, `cudaMalloc` was running 
-    - 77.3% of the GPU time was spent on the matrix multiplication function compared to 22.3% of the time spent on the stencil function
+    - For 97.2% of the time, `cudaMallocManaged` was running 
+    - 74.3% of the GPU time was spent on the stencil function compared to 25.7% of the time spent on the matrix multiplication function
+
 ## CUDA using Shared Memory
 
 
