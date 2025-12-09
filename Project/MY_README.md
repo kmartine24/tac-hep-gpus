@@ -6,7 +6,8 @@
   - The two matrices were multiplied together 
   - A stencil check and matrix check were written based off of code used in the homework
 - To compile: 
-```g++ my_script.cc - o my_script
+```
+g++ my_script.cc - o my_script
 ```
 - We were also tasked with using the VTune profiler and to identify the computational intensive parts.
   - To install VTune we ran: `source /opt/intel/oneapi/setvars.sh`
