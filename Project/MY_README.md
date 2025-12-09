@@ -16,6 +16,7 @@ g++ mult_stencil.cc -o mult_stencil
     - `vtune -collect hotspots -quiet ./mult_stencil`
     - `vtune -report summary -format csv -report-output summary.csv`
     - `vtune -report hotspots -format csv -report-output hotspots.csv`
+  - For reference, the matrix multiplication function took the most computation time compared to the stencil function (0.52 vs 0.02 respectively)
 
 ## Porting to CUDA using Explicit Memory
 - The same process that was required for the CPU profiling was also performed for CUDA programming using explicit memory
@@ -34,6 +35,7 @@ nvcc my_script.cu -o my_script
 ```
 
 ## CUDA using Managed Memory
+- This is very similar to the previous CUDA code written
 
 ## CUDA using Shared Memory
 
