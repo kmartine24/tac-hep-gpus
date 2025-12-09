@@ -50,14 +50,45 @@ void matmul(const int A[][DSIZE], const int B[][DSIZE], int C[][DSIZE], int size
 	    for (int k = 0; k < size; ++k) {
                 add += A_temp[i*size + k]*B_temp[k*size + j];
             }
+	    C[i][j] = add;
 	}
     }
 }
 
 // -------- CHECKERS --------
+// Notice that these checks are similar to the one we did in CUDA from the homework
 // %%%%%%%% (A) STENCIL %%%%%%%%
 // %%%%%%%% (B) MATRIX %%%%%%%%
-
+void matmul_check(const int A[][DSIZE], const int B[][DSIZE], const int C[][DSIZE]) {
+    int Aval_stencil = A_val + A_val*4*radius;
+    int Bval_stencil = B_val + B_val*4*radius;
+    int avg_DSIZE = DSIZE - 2*radius;
+    for (int i = 0; i < DSIZE; ++i) {
+        for (int j = 0; j < DSIZE; ++j) {
+            if ((i < radius || i + radius >= DSIZE) && (j < radius || j + radius >= DSIZE)) {
+                if (C[i][j] != A_val*B_val*DSIZE) {
+                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, C[i][j], A_val*B_val*DSIZE);
+                }
+            }
+            else if ((i < radius || i + radius >= DSIZE) && (j >= radius && j + radius < DSIZE)) {
+                if (C[i][j] != A_val*B_val*2*radius + A_val*Bval_stencil*avg_DSIZE) {
+                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, C[i][j], A_val*B_val*2*radius + A_val*Bval_stencil*avg_DSIZE);
+                }
+            }
+	    else if ((i >= radius && i + radius < DSIZE) && (j >= radius && j + radius < DSIZE)) {
+                if (C[i][j] != A_val*B_val*2*radius + Aval_stencil*Bval_stencil*avg_DSIZE) {
+                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, C[i][j], A_val*B_val*2*radius + Aval_stencil*Bval_stencil*avg_DSIZE);
+                }
+            }
+            else {
+                if (C[i][j] != A_val*B_val*2*radius + Aval_stencil*B_val*avg_DSIZE) {
+                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, C[i][j], A_val*B_val*2*radius + Aval_stencil*B_val*avg_DSIZE);
+                }
+            }
+        }
+    }
+    printf("No Errors found\n");
+}
 
 int main() {
     int A[DSIZE][DSIZE];
@@ -85,6 +116,10 @@ int main() {
 
     // Matrix Multiplication: 
     matmul(A_stencil, B_stencil, C, DSIZE);
+    // Matrix Multiplication Checker: 
+    matmul_check(A_stencil, B_stencil, C);
+
+    return 0;
 }
 
 
