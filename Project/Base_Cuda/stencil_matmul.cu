@@ -120,7 +120,7 @@ void matmul_check(const int *A, const int *B, const int *C) {
                 }
             }		 
 	    else {
-                if (C[j+i*(N + 2 * RADIUS)] != A_val*B_val*2*RADIUS + Aval_stencil*Bval_stencil*avg_DSIZE) {
+                if (C[j+i*(N + 2 * RADIUS)] != A_val*B_val*2*RADIUS + Aval_stencil*B_val*avg_DSIZE) {
                     printf("(D) Matrix Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, C[j+i*(N + 2 * RADIUS)], A_val*B_val*2*RADIUS + Aval_stencil*B_val*avg_DSIZE);
                 }
             }
