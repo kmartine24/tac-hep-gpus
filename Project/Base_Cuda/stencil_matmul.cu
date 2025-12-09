@@ -104,19 +104,24 @@ void matmul_check(const int *A, const int *B, const int *C) {
     int avg_DSIZE = DSIZE - 2*RADIUS;
     for (int i = 0; i < N + 2 * RADIUS; ++i) {
         for (int j = 0; j < N + 2 * RADIUS; ++j) {
-            if (i < RADIUS || i >= N + RADIUS) {
+            if ((i < RADIUS || i >= N + RADIUS) && (j < RADIUS || j >= N + RADIUS)) {
                 if (C[j+i*(N + 2 * RADIUS)] != A_val*B_val*DSIZE) {
-                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, C[j+i*(N + 2 * RADIUS)], A_val*B_val*DSIZE);
+                    printf("(A) Matrix Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, C[j+i*(N + 2 * RADIUS)], A_val*B_val*DSIZE);
                 }
             }
-            else if (j < RADIUS || j >= N + RADIUS) {
-                if (C[j+i*(N + 2 * RADIUS)] != 1) {
-                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, C[j+i*(N + 2 * RADIUS)], A_val*B_val);
+            else if ((i < RADIUS || i >= N + RADIUS) && (j >= RADIUS && j < RADIUS + N)) {
+                if (C[j+i*(N + 2 * RADIUS)] != A_val*B_val*2*RADIUS + A_val*Bval_stencil*avg_DSIZE) {
+                    printf("(B) Matrix Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, C[j+i*(N + 2 * RADIUS)], A_val*B_val*2*RADIUS + A_val*Bval_stencil*avg_DSIZE);
                 }
             }		 
-            else {
-                if (C[j+i*(N + 2 * RADIUS)] != 1 + 4 * RADIUS) {
-                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, C[j+i*(N + 2 * RADIUS)], Aval_stencil*Bval_stencil*avg_DSIZE);
+            else if ((i >= RADIUS || i < N + RADIUS) && (j >= RADIUS && j < RADIUS + N)) {
+                if (C[j+i*(N + 2 * RADIUS)] != A_val*B_val*2*RADIUS + Aval_stencil*Bval_stencil*avg_DSIZE) {
+                    printf("(C) Matrix Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, C[j+i*(N + 2 * RADIUS)], A_val*B_val*2*RADIUS + Aval_stencil*Bval_stencil*avg_DSIZE);
+                }
+            }		 
+	    else {
+                if (C[j+i*(N + 2 * RADIUS)] != A_val*B_val*2*RADIUS + Aval_stencil*Bval_stencil*avg_DSIZE) {
+                    printf("(D) Matrix Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, C[j+i*(N + 2 * RADIUS)], A_val*B_val*2*RADIUS + Aval_stencil*B_val*avg_DSIZE);
                 }
             }
         }
@@ -164,7 +169,7 @@ int main(void) {
 
     // Launch the kernel 
     // Properly set memory address for first element on which the stencil will be applied
-    stencil_2d<<<grid,block>>>(d_A + RADIUS*(N + 2*RADIUS) + RADIUS , d_B_stencil + RADIUS*(N + 2*RADIUS) + RADIUS);
+    stencil_2d<<<grid,block>>>(d_A + RADIUS*(N + 2*RADIUS) + RADIUS , d_A_stencil + RADIUS*(N + 2*RADIUS) + RADIUS);
     stencil_2d<<<grid,block>>>(d_B + RADIUS*(N + 2*RADIUS) + RADIUS , d_B_stencil + RADIUS*(N + 2*RADIUS) + RADIUS);
     cudaCheckErrors("Check for proper stencil function performance");
 
@@ -183,6 +188,9 @@ int main(void) {
     cudaMemcpy(h_B_stencil, d_B_stencil, size, cudaMemcpyDeviceToHost);
 
     // Error Checking
+    stencil_check(h_A, h_A_stencil, A_val);
+    stencil_check(h_B, h_B_stencil, B_val);
+    matmul_check(h_A_stencil, h_B_stencil, h_C);
 
     // Cleanup
     free(h_A);
