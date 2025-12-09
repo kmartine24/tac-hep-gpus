@@ -58,6 +58,37 @@ void matmul(const int A[][DSIZE], const int B[][DSIZE], int C[][DSIZE], int size
 // -------- CHECKERS --------
 // Notice that these checks are similar to the one we did in CUDA from the homework
 // %%%%%%%% (A) STENCIL %%%%%%%%
+void stencil_check(const int A_out[][DSIZE], const int B_out[][DSIZE]) {
+    for (int i = 0; i < DSIZE; ++i) {
+        for (int j = 0; j < DSIZE; ++j) {
+            if (i < radius || i +radius >= DSIZE) {
+                if (A_out[i][j] != A_val) {
+                    printf("Matrix A: Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, A_out[i][j], A_val);
+                }
+                if (B_out[i][j] != B_val) {
+                    printf("Matrix B: Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, B_out[i][j], B_val);
+                }
+            }
+            else if (j < radius || j + radius >= DSIZE) {
+                if (A_out[i][j] != A_val) {
+                    printf("Matrix A: Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, A_out[i][j], A_val);
+                }
+                if (B_out[i][j] != B_val) {
+                    printf("Matrix B: Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, B_out[i][j], B_val);
+                }
+            }
+            else {
+                if (A_out[i][j] != A_val + A_val * 4 * radius) {
+                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, A_out[i][j], A_val + A_val*4*radius);
+		}
+                if (B_out[i][j] != B_val + B_val * 4 * radius) {
+                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, B_out[i][j], B_val + B_val*4*radius);
+                }
+            }
+        }
+    }
+    printf("No Errors found\n");
+}
 // %%%%%%%% (B) MATRIX %%%%%%%%
 void matmul_check(const int A[][DSIZE], const int B[][DSIZE], const int C[][DSIZE]) {
     int Aval_stencil = A_val + A_val*4*radius;
