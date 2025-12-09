@@ -39,7 +39,7 @@ __global__ void stencil_2d(int *in, int *out) {
 
 // -------- Matrix Multiplication --------
 // Similar to HW 3
-__global__ void matrix_mul(const float *A, const float *B, float *C, int size) {
+__global__ void matrix_mul(const int *A, const int *B, int *C, int size) {
 
     // create thread x index
     // create thread y index
@@ -72,26 +72,23 @@ __global__ void matrix_mul(const float *A, const float *B, float *C, int size) {
    } while (0)
 
 // %%%%%%%% (A) STENCIL %%%%%%%%
-// Notice the stencil_check() function is similar to the one presented in the homework
+// Notice the stencil_check() function is similar to the one presented in HW 4
 void stencil_check(const int *in, const int *out, const int val) {
     for (int i = 0; i < N + 2 * RADIUS; ++i) {
         for (int j = 0; j < N + 2 * RADIUS; ++j) {
             if (i < RADIUS || i >= N + RADIUS) {
                 if (out[j+i*(N + 2 * RADIUS)] != val) {
-                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, out[j+i*(N + 2 * RADIUS)], 1);
-                    return -1;
+                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, out[j+i*(N + 2 * RADIUS)], val);
                 }
             }
             else if (j < RADIUS || j >= N + RADIUS) {
                 if (out[j+i*(N + 2 * RADIUS)] != val) {
-                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, out[j+i*(N + 2 * RADIUS)], 1);
-                    return -1;
+                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, out[j+i*(N + 2 * RADIUS)], val);
                 }
             }		 
             else {
                 if (out[j+i*(N + 2 * RADIUS)] != val + val * 4 * RADIUS) {
-                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, out[j+i*(N + 2 * RADIUS)], 1 + 4*RADIUS);
-                    return -1;
+                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, out[j+i*(N + 2 * RADIUS)], val + val*4*RADIUS);
                 }
             }
         }
@@ -100,32 +97,36 @@ void stencil_check(const int *in, const int *out, const int val) {
 }
 
 // %%%%%%%% (B) MATRIX %%%%%%%%
-// Notice the matmul_check() function is similar to the one presented in the homework
+// Notice the matmul_check() function is similar to the stencil checker
 void matmul_check(const int *A, const int *B, const int *C) {
-    // Error Checking
+    int Aval_stencil = A_val + A_val*4*RADIUS;
+    int Bval_stencil = B_val + B_val*4*RADIUS;
+    int avg_DSIZE = DSIZE - 2*RADIUS;
     for (int i = 0; i < N + 2 * RADIUS; ++i) {
         for (int j = 0; j < N + 2 * RADIUS; ++j) {
             if (i < RADIUS || i >= N + RADIUS) {
-                if (out[j+i*(N + 2 * RADIUS)] != 1) {
-                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, out[j+i*(N + 2 * RADIUS)], 1);
-                    return -1;
+                if (C[j+i*(N + 2 * RADIUS)] != A_val*B_val*DSIZE) {
+                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, C[j+i*(N + 2 * RADIUS)], A_val*B_val*DSIZE);
                 }
             }
             else if (j < RADIUS || j >= N + RADIUS) {
-                if (out[j+i*(N + 2 * RADIUS)] != 1) {
-                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, out[j+i*(N + 2 * RADIUS)], 1);
-                    return -1;
+                if (C[j+i*(N + 2 * RADIUS)] != 1) {
+                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, C[j+i*(N + 2 * RADIUS)], A_val*B_val);
                 }
             }		 
             else {
-                if (out[j+i*(N + 2 * RADIUS)] != 1 + 4 * RADIUS) {
-                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, out[j+i*(N + 2 * RADIUS)], 1 + 4*RADIUS);
-                    return -1;
+                if (C[j+i*(N + 2 * RADIUS)] != 1 + 4 * RADIUS) {
+                    printf("Mismatch at index [%d,%d], was: %d, should be: %d\n", i,j, C[j+i*(N + 2 * RADIUS)], Aval_stencil*Bval_stencil*avg_DSIZE);
                 }
             }
         }
     }
     printf("No Errors found\n");
+}
+
+// To Fix an error:
+void fill_ints(int *x, int n, int val) {
+    fill_n(x, n, val);
 }
 
 int main(void) {
@@ -134,11 +135,11 @@ int main(void) {
 
     // Alloc space for host copies and setup values
     int size = (N + 2*RADIUS)*(N + 2*RADIUS) * sizeof(int);
-    h_A = (int *)malloc(size); fill_ints(h_A, (N + 2*RADIUS)*(N + 2*RADIUS));
-    h_B = (int *)malloc(size); fill_ints(h_B, (N + 2*RADIUS)*(N + 2*RADIUS));
-    h_B = (int *)malloc(size); fill_ints(h_C, (N + 2*RADIUS)*(N + 2*RADIUS));
-    h_A_stencil = (int *)malloc(size); fill_ints(h_A_stencil, (N + 2*RADIUS)*(N + 2*RADIUS));
-    h_B_stencil = (int *)malloc(size); fill_ints(h_B_stencil, (N + 2*RADIUS)*(N + 2*RADIUS));
+    h_A = (int *)malloc(size); fill_ints(h_A, (N + 2*RADIUS)*(N + 2*RADIUS), A_val);
+    h_B = (int *)malloc(size); fill_ints(h_B, (N + 2*RADIUS)*(N + 2*RADIUS), B_val);
+    h_C = (int *)malloc(size); fill_ints(h_C, (N + 2*RADIUS)*(N + 2*RADIUS), 0);
+    h_A_stencil = (int *)malloc(size); fill_ints(h_A_stencil, (N + 2*RADIUS)*(N + 2*RADIUS), A_val);
+    h_B_stencil = (int *)malloc(size); fill_ints(h_B_stencil, (N + 2*RADIUS)*(N + 2*RADIUS), B_val);
 
     // Alloc space for device copies
     cudaMalloc((void **)&d_A, size);
